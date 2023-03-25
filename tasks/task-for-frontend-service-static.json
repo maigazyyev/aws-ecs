@@ -1,0 +1,53 @@
+{
+    "family": "dev-company-frontend-service-name-td",
+    "networkMode": "bridge",
+    "executionRoleArn": "arn:aws:iam::123456789:role/ecsTaskExecutionRole",
+    "cpu": "512",
+    "memory": "2048",
+    "containerDefinitions": [
+      {
+        "name": "service_name",
+        "image": "123456789.dkr.ecr.eu-north-1.amazonaws.com/company/frontend/service-name:latest",
+        "cpu": 512,
+        "memory": 2048,
+        "hostname":"servicename",
+        "environment": [
+            {
+              "name": "REACT_APP_DEV_DISABLE_ESLINT",
+              "value": "true"
+            },
+            {
+              "name": "DISABLE_ESLINT_PLUGIN",
+              "value": "true"
+            },
+            {
+              "name": "CI",
+              "value": "true"
+            },
+            {
+              "name": "REACT_APP_HOST",
+              "value": "/api/v1"
+            }
+          ],
+        "command": [
+          "npm", "run", "build-stage"
+        ],
+        "mountPoints": [
+            {
+              "sourceVolume": "service-name",
+              "containerPath": "/app/build",
+              "readOnly": false
+            }
+          ]
+      }
+    ],
+    "volumes": [
+      {
+        "name": "service-name",
+        "efsVolumeConfiguration": {
+          "fileSystemId": "fs-0648d161daf824f15",  #### AWS EFS Volume ID
+          "rootDirectory": "/"
+        }
+      }
+    ]
+    }

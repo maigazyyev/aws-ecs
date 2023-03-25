@@ -1,0 +1,49 @@
+{
+  "family": "dev-company-frontend-service-name-td",
+  "networkMode": "bridge",
+  "executionRoleArn": "arn:aws:iam::123456789:role/ecsTaskExecutionRole",
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "service-name",
+      "image": "123456789.dkr.ecr.eu-north-1.amazonaws.com/company/frontend/service-name:latest",
+      "cpu": 256,
+      "memory": 512,
+      "hostname":"servicename",
+      "environment": [
+        {
+          "name": "BASE_URL",
+          "value": "https://example.domain.com/api/v1/"
+        }
+      ],
+      "mountPoints": [
+          {
+            "sourceVolume": "shared-volume",
+            "containerPath": "/usr/server/app"
+          }
+        ],
+      "portMappings": [ 
+        { 
+           "containerPort": 3000,
+           "hostPort": 3000,
+           "protocol": "tcp"
+        }
+     ],
+      "command": [
+        "npm", "run", "serve-prod"
+      ],
+      "interactive": true,
+      "pseudoTerminal": true
+    }
+  ],
+  "volumes": [
+    {
+        "name": "shared-volume",
+        "efsVolumeConfiguration": {
+            "fileSystemId": "fs-0160b2296f2ad53d3",
+            "rootDirectory": "/"
+        }
+    }
+]
+  }

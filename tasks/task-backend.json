@@ -1,0 +1,161 @@
+{
+  "family": "dev-company-backend-service-name-td",
+  "networkMode": "bridge",
+  "executionRoleArn": "arn:aws:iam::123456789:role/ecsTaskExecutionRole",
+  "cpu": "1024",
+  "memory": "4096",
+  "containerDefinitions": [
+    {
+      "name": "django",
+      "image": "123456789.dkr.ecr.eu-north-1.amazonaws.com/company/backend/service-name:latest",
+      "cpu": 256,
+      "memory": 1024,
+      "environment": [
+        {
+          "name": "AWS_SECRET_NAME",
+          "value": "some-value"
+        },
+        {
+          "name": "AWS_REGION_NAME",
+          "value": "eu-north-1"
+        },
+        {
+          "name": "AWS_ACCESS_KEY_ID",
+          "value": "A**WKTASD1H7AASDY6GEZCR77"
+        },
+        {
+          "name": "AWS_SECRET_ACCESS_KEY",
+          "value": "*********eDdxa+F8i0pd"
+        },
+        {
+          "name": "DJANGO_SETTINGS_MODULE",
+          "value": "settings.dev"
+        },
+        {
+          "name": "PY_AUTORELOAD",
+          "value": "True"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "shared-volume",
+          "containerPath": "/web"
+        }
+      ],
+      "portMappings": [ 
+        { 
+           "containerPort": 9001,
+           "hostPort": 9001,
+           "name": "django-port",
+           "protocol": "tcp"
+        }
+     ],
+      "command": [
+        "/bin/bash",
+        "-c",
+        "pip install -U pip; pip install -r requirements_dev.txt; invoke runuwsgi"
+      ],
+      "interactive": true,
+      "pseudoTerminal": true
+    },
+
+    {
+      "name": "celery",
+      "image": "123456789.dkr.ecr.eu-north-1.amazonaws.com/company/backend/service-name:latest",
+      "dependsOn": [
+          {
+            "containerName": "django",
+            "condition": "START"
+          }
+        ],
+      "mountPoints": [
+          {
+            "sourceVolume": "shared-volume",
+            "containerPath": "/web"
+          }
+        ],
+        "command": [
+          "/bin/bash",
+          "-c",
+          "pip install -U pip; pip install -r requirements_dev.txt; celery -A config.celery worker -l debug -c 2 --pidfile="
+        ]
+      },
+
+    {
+      "name": "celery-beat",
+      "image": "123456789.dkr.ecr.eu-north-1.amazonaws.com/company/backend/service-name:latest",
+      "dependsOn": [
+          {
+            "containerName": "django",
+            "condition": "START"
+          }
+        ],
+      "mountPoints": [
+          {
+            "sourceVolume": "shared-volume",
+            "containerPath": "/web"
+          }
+        ],
+        "command": [
+          "/bin/bash",
+          "-c",
+          "pip install -U pip; pip install -r requirements_dev.txt; celery -A config.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile="
+        ]
+      },
+
+    {
+      "name": "nginx",
+      "image": "123456789.dkr.ecr.eu-north-1.amazonaws.com/company/nginx:latest",
+      "cpu": 128,
+      "memory": 256,
+      "dependsOn": [
+        {
+          "containerName": "django",
+          "condition": "START"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "shared-volume",
+          "containerPath": "/web"
+        },
+        {
+          "sourceVolume": "shared-volume-of-other-container",
+          "containerPath": "/some/path"
+        }
+      ],
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "extraHosts": [
+        {
+            "hostname": "container_name",                      ##### adding to /etc/hosts 
+            "ipAddress": "172.17.0.2"
+        }
+    ],
+      "links": [
+          "django"
+      ],
+      "command": [
+        "/bin/bash",
+        "-c",
+        "nginx -g 'daemon off;'"
+      ]
+    }
+  ],
+  "volumes": [
+    {
+        "name": "shared-volume-1"                             ###### containers of this task will use
+    },
+    {
+        "name": "shared-volume-of-other-service",             ###### other volume that uses other task definition
+        "host": {
+          "sourcePath": "/some/path/to/containerinstance"
+        }
+    }
+]
+}

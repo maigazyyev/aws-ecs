@@ -1,0 +1,41 @@
+{
+  "family": "promtail",
+  "executionRoleArn": "arn:aws:iam::123456789:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "promtail",
+      "cpu": 128,
+      "memory": 256,
+      "image": "grafana/promtail:2.3.0",
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-region": "eu-north-1",
+          "awslogs-group": "ecs/*",
+          "awslogs-stream-prefix": "ecs*"
+        }
+      },
+      "environment": [
+        {
+          "name": "LOKI_URL",
+          "value": "http://10.129.5.26:3100/loki/api/v1/push"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "varLibDockerContainers",
+          "containerPath": "/var/lib/docker/containers",
+          "readOnly": true
+        }
+      ]
+    }
+  ],
+  "volumes": [
+    {
+      "name": "varLibDockerContainers",
+      "host": {
+        "sourcePath": "/var/lib/docker/containers"
+      }
+    }
+  ]
+}
